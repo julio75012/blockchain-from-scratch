@@ -58,18 +58,19 @@ impl StateMachine for Atm {
     type Transition = Action;
 
     fn next_state(starting_state: &Self::State, t: &Self::Transition) -> Self::State {
-        match t {
-            Action::PressKey(key) => match key {
-                Key::Enter => { match starting_state.expected_pin_hash {
-                    Auth::Waiting => return  starting_state,
-                    Auth::Authenticated => return 
-                } }
-                Key::One => {}
-                Key::Two => {}
-                Key::Three => {}
-                Key::Four => {}
-            },
-        }
+        // match t {
+        //     Action::PressKey(key) => match key {
+        //         Key::Enter => { match starting_state.expected_pin_hash {
+        //             Auth::Waiting => return  starting_state,
+        //             Auth::Authenticated => return 
+        //         } }
+        //         Key::One => {}
+        //         Key::Two => {}
+        //         Key::Three => {}
+        //         Key::Four => {}
+        //     },
+        // }
+        todo!()
     }
 }
 

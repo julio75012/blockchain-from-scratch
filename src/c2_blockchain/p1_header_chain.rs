@@ -5,6 +5,8 @@
 
 use crate::hash;
 
+use super::p5_fork_choice::HeaviestChainRule;
+
 // We will use Rust's built-in hashing where the output type is u64. I'll make an alias
 // so the code is slightly more readable.
 type Hash = u64;
@@ -25,12 +27,24 @@ pub struct Header {
 impl Header {
     /// Returns a new valid genesis header.
     fn genesis() -> Self {
-        todo!("Exercise 1")
+        Self {
+            parent: 0,
+            height: 0,
+            extrinsics_root: (),
+            state_root: (),
+            consensus_digest: (),
+        }
     }
 
     /// Create and return a valid child header.
     fn child(&self) -> Self {
-        todo!("Exercise 2")
+        Self {
+            parent: hash(&self),
+            height: &self.height + 1,
+            extrinsics_root: (),
+            state_root: (),
+            consensus_digest: (),
+        }
     }
 
     /// Verify that all the given headers form a valid chain from this header to the tip.
@@ -38,7 +52,22 @@ impl Header {
     /// This method may assume that the block on which it is called is valid, but it
     /// must verify all of the blocks in the slice;
     fn verify_sub_chain(&self, chain: &[Header]) -> bool {
-        todo!("Exercise 3")
+        let iter_header = chain.iter();
+        let mut previous_header = self;
+        // match iter_header.next() {
+        //     Some(header) => header,
+        //     None => return false,
+        // };
+        for header in iter_header {
+            if hash(&previous_header) != header.parent {
+                return false;
+            }
+            if previous_header.height + 1 != header.height {
+                return false;
+            }
+            previous_header = header;
+        }
+        return true;
     }
 }
 
@@ -46,14 +75,29 @@ impl Header {
 
 /// Build and return a valid chain with exactly five blocks including the genesis block.
 fn build_valid_chain_length_5() -> Vec<Header> {
-    todo!("Exercise 4")
+    let mut blockchain = Vec::<Header>::new();
+    let g = Header::genesis();
+    blockchain.push(g);
+    for _i in 1..5 {
+        blockchain.push(blockchain.last().unwrap().child())
+    }
+
+    blockchain
 }
 
 /// Build and return a chain with at least three headers.
 /// The chain should start with a proper genesis header,
 /// but the entire chain should NOT be valid.
 fn build_an_invalid_chain() -> Vec<Header> {
-    todo!("Exercise 5")
+    let mut blockchain = Vec::<Header>::new();
+    let g = Header::genesis();
+    blockchain.push(g);
+    for _i in 1..3 {
+        blockchain.push(blockchain.last().unwrap().child())
+    }
+
+    blockchain[1].parent = hash(&blockchain[1].parent);
+    blockchain
 }
 
 // To run these tests: `cargo test bc_1
