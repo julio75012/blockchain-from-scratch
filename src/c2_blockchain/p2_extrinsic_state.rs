@@ -31,12 +31,24 @@ pub struct Header {
 impl Header {
     /// Returns a new valid genesis header.
     fn genesis() -> Self {
-        todo!("Exercise 1")
+        Self {
+            parent: 0,
+            height: 0,
+            extrinsic: 0,
+            state: 0,
+            consensus_digest: (),
+        }
     }
 
     /// Create and return a valid child header.
     fn child(&self, extrinsic: u64) -> Self {
-        todo!("Exercise 2")
+        Self {
+            parent: hash(self),
+            height: self.height + 1,
+            extrinsic: extrinsic,
+            state: self.state + extrinsic,
+            consensus_digest: (),
+        }
     }
 
     /// Verify that all the given headers form a valid chain from this header to the tip.
@@ -48,7 +60,21 @@ impl Header {
     /// So in order for a block to verify, we must have that relationship between the extrinsic,
     /// the previous state, and the current state.
     fn verify_sub_chain(&self, chain: &[Header]) -> bool {
-        todo!("Exercise 3")
+        let iter_header = chain.iter();
+        let mut previous_header = self;
+        for header in iter_header {
+            if hash(&previous_header) != header.parent {
+                return false;
+            }
+            if previous_header.height + 1 != header.height {
+                return false;
+            }
+            if previous_header.state + header.extrinsic != header.state {
+                return false;
+            }
+            previous_header = header;
+        }
+        return true;
     }
 }
 
@@ -56,7 +82,12 @@ impl Header {
 
 /// Build and return a valid chain with the given number of blocks.
 fn build_valid_chain(n: u64) -> Vec<Header> {
-    todo!("Exercise 4")
+    let mut valid_chain = Vec::new();
+    valid_chain.push(Header::genesis());
+    for i in 1..n {
+        valid_chain.push(valid_chain.last().unwrap().child(i * i))
+    }
+    valid_chain
 }
 
 /// Build and return a chain with at least three headers.
@@ -70,7 +101,11 @@ fn build_valid_chain(n: u64) -> Vec<Header> {
 /// For this function, ONLY USE the the `genesis()` and `child()` methods to create blocks.
 /// The exercise is still possible.
 fn build_an_invalid_chain() -> Vec<Header> {
-    todo!("Exercise 5")
+    let mut valid_chain = Vec::new();
+    valid_chain.push(Header::genesis());
+    valid_chain.push(valid_chain.last().unwrap().child(1));
+    valid_chain.push(Header::genesis());
+    valid_chain
 }
 
 /// Build and return two header chains.
@@ -85,7 +120,24 @@ fn build_an_invalid_chain() -> Vec<Header> {
 ///
 /// Side question: What is the fewest number of headers you could create to achieve this goal.
 fn build_forked_chain() -> (Vec<Header>, Vec<Header>) {
-    todo!("Exercise 6")
+    let mut valid_chain_1 = Vec::new();
+    let mut valid_chain_2 = Vec::new();
+    valid_chain_1.push(Header::genesis());
+    valid_chain_2.push(Header::genesis());
+
+    valid_chain_1.push(valid_chain_1.last().unwrap().child(1));
+    valid_chain_2.push(valid_chain_2.last().unwrap().child(1));
+
+    valid_chain_1.push(valid_chain_1.last().unwrap().child(4));
+    valid_chain_2.push(valid_chain_2.last().unwrap().child(4));
+
+    valid_chain_1.push(valid_chain_1.last().unwrap().child(9));
+    valid_chain_2.push(valid_chain_2.last().unwrap().child(27));
+
+    valid_chain_1.push(valid_chain_1.last().unwrap().child(16));
+    valid_chain_2.push(valid_chain_2.last().unwrap().child(16));
+
+    return (valid_chain_1, valid_chain_2);
 
     // Exercise 7: After you have completed this task, look at how its test is written below.
     // There is a critical thinking question for you there.
@@ -215,5 +267,9 @@ fn bc_2_verify_forked_chain() {
     // Question for students: I've only compared the last blocks here.
     // Is that enough? Is it possible that the two chains have the same final block,
     // but differ somewhere else?
+
+    //I believe this is enough because the hash contained in the header is very likely to be propagated different until the final block
+    //I believe that the probability of collision of the hashes of two forked blockchain is very low due to the
+    // high variance of the hash in case of small change in the input
     assert_ne!(c1.last(), c2.last());
 }

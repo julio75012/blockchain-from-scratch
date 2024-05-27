@@ -37,7 +37,7 @@ pub struct Header {
 impl Header {
     /// Returns a new valid genesis header.
     fn genesis() -> Self {
-        todo!("Exercise 1")
+        Self { parent:0, height: 0, extrinsic: 0, state: 0, consensus_digest:0}
     }
 
     /// Create and return a valid child header.

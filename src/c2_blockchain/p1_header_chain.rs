@@ -54,10 +54,6 @@ impl Header {
     fn verify_sub_chain(&self, chain: &[Header]) -> bool {
         let iter_header = chain.iter();
         let mut previous_header = self;
-        // match iter_header.next() {
-        //     Some(header) => header,
-        //     None => return false,
-        // };
         for header in iter_header {
             if hash(&previous_header) != header.parent {
                 return false;
