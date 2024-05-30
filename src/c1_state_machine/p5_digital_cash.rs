@@ -51,8 +51,14 @@ impl State {
     }
 
     fn add_bill(&mut self, elem: Bill) {
-        self.bills.insert(elem);
-        self.increment_serial()
+        if elem.amount > 0 {
+            self.bills.insert(elem);
+            self.increment_serial()
+        }
+    }
+
+    fn burn_bill(&mut self, elem: Bill) -> bool {
+        self.bills.remove(&elem)
     }
 }
 
@@ -88,13 +94,73 @@ pub enum CashTransaction {
     },
 }
 
+impl DigitalCashSystem {
+    fn proper_sum(vec: &Vec<Bill>) -> Option<u64> {
+        vec.iter().try_fold(0u64, |acc, s| {
+            if s.amount == 0 {
+                return None;
+            } else {
+                acc.checked_add(s.amount as u64)
+            }
+        })
+    }
+}
 /// We model this system as a state machine with two possible transitions
 impl StateMachine for DigitalCashSystem {
     type State = State;
     type Transition = CashTransaction;
 
     fn next_state(starting_state: &Self::State, t: &Self::Transition) -> Self::State {
-        todo!("Exercise 1")
+        let mut new_state = starting_state.clone();
+        match t {
+            CashTransaction::Mint { minter, amount } => {
+                let bill = Bill {
+                    owner: *minter,
+                    amount: *amount,
+                    serial: new_state.next_serial(),
+                };
+                new_state.add_bill(bill);
+                return new_state;
+            }
+            CashTransaction::Transfer { spends, receives } => {
+                let sum_received = match DigitalCashSystem::proper_sum(receives) {
+                    Some(x) => {
+                        // if x == 0 {
+                        //     return new_state;
+                        // } else {
+                        //     x
+                        // }
+                        x
+                    }
+                    None => return new_state,
+                };
+                let sum_sent = match DigitalCashSystem::proper_sum(spends) {
+                    Some(x) => x,
+                    None => return new_state,
+                };
+                let diff = sum_sent as i128 - sum_received as i128;
+                if diff < 0 {
+                    return new_state;
+                }
+                let mut burnt_serials = Vec::new();
+                for bill in spends {
+                    burnt_serials.push(bill.serial);
+                    if !new_state.burn_bill(bill.clone()){
+                        return starting_state.clone()
+                    }
+                }
+                for bill in receives {
+                    if burnt_serials.contains(&bill.serial) {
+                        return starting_state.clone();
+                    }
+                    if new_state.next_serial() < bill.serial {
+                        return starting_state.clone();
+                    }
+                    new_state.add_bill(bill.clone())
+                }
+                return new_state;
+            }
+        }
     }
 }
 
